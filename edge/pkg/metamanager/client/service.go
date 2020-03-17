@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -25,6 +24,7 @@ type ServiceInterface interface {
 	Delete(name string) error
 	Get(name string) (*v1.Service, error)
 	GetPods(name string) ([]v1.Pod, error)
+	List() ([]*v1.Service, error)
 }
 
 type services struct {
@@ -153,4 +153,56 @@ func handleServiceFromMetaManager(content []byte) (*v1.Service, error) {
 		return nil, fmt.Errorf("unmarshal message to Service failed, err: %v", err)
 	}
 	return &s, nil
+}
+
+func (s *services) List() ([]*v1.Service, error) {
+	resource := fmt.Sprintf("%s/%s/%s", "namespace", constants.ResourceTypeServiceList, "service")
+	msg := message.BuildMsg(modules.MetaGroup, "", constant.ModuleNameEdgeMesh, resource, model.QueryOperation, nil)
+	respMsg, err := s.send.SendSync(msg)
+	if err != nil {
+		return nil, fmt.Errorf("get service from metaManager failed, err: %v", err)
+	}
+	var content []byte
+	switch respMsg.Content.(type) {
+	case []byte:
+		content = respMsg.GetContent().([]byte)
+	default:
+		content, err = json.Marshal(respMsg.Content)
+		if err != nil {
+			return nil, fmt.Errorf("marshal message to configmap failed, err: %v", err)
+		}
+	}
+
+	if respMsg.GetOperation() == model.ResponseOperation {
+		return handlerServiceListFromMetaDB(content)
+	}
+	return handleServiceListFromMetaManager(content)
+}
+
+func handlerServiceListFromMetaDB(content []byte) ([]*v1.Service, error) {
+	var lists []string
+	err := json.Unmarshal([]byte(content), &lists)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal message to Service list from db failed, err: %v", err)
+	}
+
+	if len(lists) != 1 {
+		return nil, fmt.Errorf("Service length from meta db is %d", len(lists))
+	}
+
+	var s []*v1.Service
+	err = json.Unmarshal([]byte(lists[0]), &s)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal message to Service from db failed, err: %v", err)
+	}
+	return s, nil
+}
+
+func handleServiceListFromMetaManager(content []byte) ([]*v1.Service, error) {
+	var s []*v1.Service
+	err := json.Unmarshal(content, &s)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal message to Service failed, err: %v", err)
+	}
+	return s, nil
 }
