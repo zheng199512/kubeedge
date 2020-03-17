@@ -27,6 +27,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/labels"
 	"net"
 	"net/http"
 	"os"
@@ -167,6 +168,30 @@ type podReady struct {
 }
 
 // edged is the main edged implementation.
+type serviceLister interface {
+	List(labels.Selector) ([]*v1.Service, error)
+}
+
+type EdgeServiceLister struct {
+	metaClient client.CoreInterface
+}
+
+func NewEdgeServiceLister() *EdgeServiceLister {
+	return &EdgeServiceLister{
+		metaClient: client.New(),
+	}
+}
+
+func (esl *EdgeServiceLister) List(selector labels.Selector) ([]*v1.Service, error) {
+	if services, err := esl.metaClient.Services("").List(); err != nil {
+		klog.Errorf("metamanager list service err: %v", err)
+		return nil, err
+	} else {
+		return services, nil
+	}
+}
+
+//Define edged
 type edged struct {
 	// dns config
 	dnsConfigurer             *kubedns.Configurer
@@ -244,6 +269,8 @@ type edged struct {
 	dockerLegacyService dockershim.DockerLegacyService
 	// Optional, defaults to simple Docker implementation
 	runner kubecontainer.ContainerCommandRunner
+	// serviceLister knows how to list services
+	serviceLister serviceLister
 }
 
 // Register register edged
@@ -424,6 +451,8 @@ func newEdged(enable bool) (*edged, error) {
 		recorder:                  recorder,
 		enable:                    enable,
 	}
+
+	ed.serviceLister = NewEdgeServiceLister()
 
 	err := ed.makePodDir()
 	if err != nil {
