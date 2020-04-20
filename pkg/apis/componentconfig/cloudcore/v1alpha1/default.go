@@ -18,16 +18,19 @@ package v1alpha1
 
 import (
 	"path"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
+	apiserveroptions "k8s.io/apiserver/pkg/server/options"
+	componentbaseconfig "k8s.io/component-base/config"
 )
 
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
 func NewDefaultCloudCoreConfig() *CloudCoreConfig {
-	return &CloudCoreConfig{
+	c:= &CloudCoreConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       Kind,
 			APIVersion: path.Join(GroupName, APIVersion),
@@ -124,7 +127,29 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Enable: true,
 			},
 		},
+		LeaderElection:	&componentbaseconfig.LeaderElectionConfiguration{
+			LeaderElect:		true,
+			LeaseDuration:      metav1.Duration{Duration: 15 * time.Second},
+			RenewDeadline:      metav1.Duration{Duration: 10 * time.Second},
+			RetryPeriod:        metav1.Duration{Duration: 2 * time.Second},
+			ResourceLock: 		"endpointsleases",
+			ResourceNamespace:  "kubeedge",
+			ResourceName: 		"cloudcore",
+		},
+		SecureServing: apiserveroptions.NewSecureServingOptions().WithLoopback(),
+		Authentication: apiserveroptions.NewDelegatingAuthenticationOptions(),
+		Authorization:  apiserveroptions.NewDelegatingAuthorizationOptions(),
 	}
+	c.Authentication.RemoteKubeConfigFileOptional = true
+	c.Authorization.RemoteKubeConfigFileOptional = true
+	c.Authorization.AlwaysAllowPaths = []string{"/healthz","/readyz"}
+
+	// Set the PairName but leave certificate directory blank to generate in-memory by default
+	c.SecureServing.ServerCert.CertDirectory = ""
+	c.SecureServing.ServerCert.PairName = "cloudcore"
+	// ports.KubeControllerManagerPort
+	c.SecureServing.BindPort = 10260
+	return c
 }
 
 // NewMinCloudCoreConfig returns a min CloudCoreConfig object
