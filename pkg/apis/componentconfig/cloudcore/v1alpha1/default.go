@@ -24,7 +24,6 @@ import (
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
-	apiserveroptions "k8s.io/apiserver/pkg/server/options"
 	componentbaseconfig "k8s.io/component-base/config"
 )
 
@@ -136,19 +135,7 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 			ResourceNamespace:  "kubeedge",
 			ResourceName: 		"cloudcore",
 		},
-		SecureServing: apiserveroptions.NewSecureServingOptions().WithLoopback(),
-		Authentication: apiserveroptions.NewDelegatingAuthenticationOptions(),
-		Authorization:  apiserveroptions.NewDelegatingAuthorizationOptions(),
 	}
-	c.Authentication.RemoteKubeConfigFileOptional = true
-	c.Authorization.RemoteKubeConfigFileOptional = true
-	c.Authorization.AlwaysAllowPaths = []string{"/healthz","/readyz"}
-
-	// Set the PairName but leave certificate directory blank to generate in-memory by default
-	c.SecureServing.ServerCert.CertDirectory = ""
-	c.SecureServing.ServerCert.PairName = "cloudcore"
-	// ports.KubeControllerManagerPort
-	c.SecureServing.BindPort = 10260
 	return c
 }
 
@@ -179,6 +166,9 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 					Address: "0.0.0.0",
 				},
 			},
+		},
+		LeaderElection:	&componentbaseconfig.LeaderElectionConfiguration{
+			LeaderElect:		true,
 		},
 	}
 }

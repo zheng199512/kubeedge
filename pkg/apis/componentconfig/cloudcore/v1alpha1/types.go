@@ -22,8 +22,6 @@ import (
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
 
 	componentbaseconfig "k8s.io/component-base/config"
-
-	apiserveroptions "k8s.io/apiserver/pkg/server/options"
 )
 
 // CloudCoreConfig indicates the config of cloudcore which get from cloudcore config file
@@ -35,12 +33,8 @@ type CloudCoreConfig struct {
 	// Modules indicates cloudcore modules config
 	// +Required
 	Modules *Modules `json:"modules,omitempty"`
-
+	// Configuration for LeaderElection
 	LeaderElection *componentbaseconfig.LeaderElectionConfiguration
-	// TODO:Move to cloudchub
-	SecureServing *apiserveroptions.SecureServingOptionsWithLoopback
-	Authentication  *apiserveroptions.DelegatingAuthenticationOptions
-	Authorization   *apiserveroptions.DelegatingAuthorizationOptions
 }
 
 // KubeAPIConfig indicates the configuration for interacting with k8s server

@@ -7,7 +7,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller"
-	kele"github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
+	kele "github.com/kubeedge/kubeedge/cloud/pkg/leaderelection"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1/validation"
@@ -16,18 +16,14 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/util/wait"
-	apiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/healthz"
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/apiserver/pkg/server/routes"
 	"k8s.io/apiserver/pkg/util/term"
-	"k8s.io/client-go/rest"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	componentbaseconfig "k8s.io/component-base/config"
 	"k8s.io/klog"
-	genericcontrollermanager "k8s.io/kubernetes/cmd/controller-manager/app"
 	"k8s.io/kubernetes/pkg/util/configz"
 	"net/http"
 	goruntime "runtime"
@@ -84,37 +80,6 @@ kubernetes controller which manages devices so that the device metadata/status d
  				err := http.ListenAndServe("127.0.0.0:10260", unsecuredMux)
 				klog.Errorf("%v",err)
 			}()
-
-			//TODO: Enable authentication and authorization
-			if false {
-				//TODO: Collate and encapsulate these instances(e.g. secureServingInfo)
-				//Generate concrete instances using configuration
-				var secureServingInfo *apiserver.SecureServingInfo
-				var loopbackClientConfig *rest.Config
-				var authenticationInfo *apiserver.AuthenticationInfo
-				var authorizationInfo  *apiserver.AuthorizationInfo
-				if err :=config.SecureServing.ApplyTo(&secureServingInfo,&loopbackClientConfig);err!=nil{
-					klog.Errorf("%v",err)
-				}
-				if config.SecureServing.BindPort != 0 || config.SecureServing.Listener != nil {
-					if err := config.Authentication.ApplyTo(authenticationInfo, secureServingInfo, nil); err != nil {
-						klog.Errorf("%v",err)
-					}
-					if err := config.Authorization.ApplyTo(authorizationInfo); err != nil {
-						klog.Errorf("%v",err)
-					}
-				}
-
-				if config.SecureServing != nil {
-					unsecuredMux = NewBaseHandler(&componentbaseconfig.DebuggingConfiguration{}, checks...)
-					//handler is the handler *after* authn/authz filters have been applied
-					handler := genericcontrollermanager.BuildHandlerChain(unsecuredMux, authorizationInfo, authenticationInfo)
-					//TODO: handle stoppedCh returned by secureServingInfo.Serve
-					if _, err := secureServingInfo.Serve(handler, 0, wait.NeverStop); err != nil {
-						klog.Errorf("%v",err)
-					}
-				}
-			}
 			// If leader election is enabled, runCommand via LeaderElector until done and exit.
 			if config.LeaderElection.LeaderElect {
 				kele.Run(config,electionChecker)
