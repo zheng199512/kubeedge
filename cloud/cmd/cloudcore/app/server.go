@@ -77,7 +77,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			var unsecuredMux *mux.PathRecorderMux
 			unsecuredMux = NewBaseHandler(&componentbaseconfig.DebuggingConfiguration{}, checks...)
 			go func (){
- 				err := http.ListenAndServe("127.0.0.0:10260", unsecuredMux)
+ 				err := http.ListenAndServe("0.0.0.0:10260", unsecuredMux)
 				klog.Errorf("%v",err)
 			}()
 			// If leader election is enabled, runCommand via LeaderElector until done and exit.

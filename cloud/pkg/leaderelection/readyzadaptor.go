@@ -32,7 +32,10 @@ func (l *ReadyzAdaptor) Check(req *http.Request) error {
 	l.pointerLock.Lock()
 	defer l.pointerLock.Unlock()
 	if l.le == nil {
-		return fmt.Errorf("leaderElection is unready")
+		return fmt.Errorf("leaderElection is not setting")
+	}
+	if !l.le.IsLeader(){
+		return fmt.Errorf("not yet a leader")
 	}
 	return l.le.Check(l.timeout)
 }
