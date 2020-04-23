@@ -174,10 +174,10 @@ func TriggerGracefulShutdown() {
 	klog.Errorln("Trigger graceful shutdown!")
 	p, err := os.FindProcess(syscall.Getpid())
 	if err != nil {
-		klog.Errorf("Failed to find self process %v", err)
+		klog.Errorf("Failed to find self process: %v", err)
 	}
 	err = p.Signal(os.Interrupt)
 	if err != nil {
-		klog.Errorf("Failed to trigger graceful shutdown: ", err)
+		klog.Errorf("Failed to trigger graceful shutdown: %v", err)
 	}
 }
