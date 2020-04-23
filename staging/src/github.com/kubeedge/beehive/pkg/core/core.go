@@ -1,11 +1,14 @@
 package core
 
 import (
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"k8s.io/klog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"k8s.io/klog"
+
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+
 )
 
 // StartModules starts modules that are registered

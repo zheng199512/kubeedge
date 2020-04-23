@@ -2,6 +2,14 @@ package app
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/spf13/cobra"
+	"k8s.io/apiserver/pkg/util/term"
+	cliflag "k8s.io/component-base/cli/flag"
+	"k8s.io/component-base/cli/globalflag"
+	"k8s.io/klog"
+
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/cmd/cloudcore/app/options"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
@@ -15,12 +23,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
-	"github.com/spf13/cobra"
-	"k8s.io/apiserver/pkg/util/term"
-	cliflag "k8s.io/component-base/cli/flag"
-	"k8s.io/component-base/cli/globalflag"
-	"k8s.io/klog"
-	"time"
 )
 
 func NewCloudCoreCommand() *cobra.Command {

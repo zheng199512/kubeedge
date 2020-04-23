@@ -18,10 +18,9 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	componentbaseconfig "k8s.io/component-base/config"
 
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
-
-	componentbaseconfig "k8s.io/component-base/config"
 )
 
 // CloudCoreConfig indicates the config of cloudcore which get from cloudcore config file

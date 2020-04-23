@@ -3,10 +3,10 @@ import (
 	gocontext "context"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeedge/beehive/pkg/core"
-	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
-	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
-	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
+	"os"
+	"syscall"
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,9 +20,11 @@ import (
 	componentbaseconfig "k8s.io/component-base/config"
 	"k8s.io/klog"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
-	"os"
-	"syscall"
-	"time"
+
+	"github.com/kubeedge/beehive/pkg/core"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/utils"
+	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
 func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor){

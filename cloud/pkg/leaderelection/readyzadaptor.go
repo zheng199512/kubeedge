@@ -2,10 +2,11 @@ package leaderelection
 
 import (
 	"fmt"
-	"k8s.io/client-go/tools/leaderelection"
 	"net/http"
 	"sync"
 	"time"
+
+	"k8s.io/client-go/tools/leaderelection"
 )
 
 // ReadyzAdaptor associates the /readyz endpoint with the LeaderElection object.

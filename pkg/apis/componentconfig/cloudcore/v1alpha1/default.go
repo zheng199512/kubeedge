@@ -21,10 +21,10 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	componentbaseconfig "k8s.io/component-base/config"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	metaconfig "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/meta/v1alpha1"
-	componentbaseconfig "k8s.io/component-base/config"
 )
 
 // NewDefaultCloudCoreConfig returns a full CloudCoreConfig object
