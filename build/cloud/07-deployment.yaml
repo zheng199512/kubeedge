@@ -7,6 +7,7 @@ metadata:
   name: cloudcore
   namespace: kubeedge
 spec:
+  replicas: 2
   selector:
     matchLabels:
       k8s-app: kubeedge
@@ -18,10 +19,28 @@ spec:
         kubeedge: cloudcore
     spec:
       hostNetwork: true
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/edge
+                    operator: DoesNotExist
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: kubeedge
+                      operator: In
+                      values:
+                        - cloudcore
+                topologyKey: kubernetes.io/hostname
       containers:
       - name: cloudcore
         image: kubeedge/cloudcore:v1.2.1
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 10000
           name: cloudhub
@@ -38,6 +57,15 @@ spec:
           mountPath: /etc/kubeedge/config
         - name: certs
           mountPath: /etc/kubeedge
+        env:
+        - name: CLOUDCORE_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        - name: CLOUDCORE_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
       restartPolicy: Always
       serviceAccount: cloudcore
       serviceAccountName: cloudcore

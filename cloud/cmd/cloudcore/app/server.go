@@ -16,17 +16,10 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/version"
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 	"github.com/spf13/cobra"
-	"k8s.io/apiserver/pkg/server/healthz"
-	"k8s.io/apiserver/pkg/server/mux"
-	"k8s.io/apiserver/pkg/server/routes"
 	"k8s.io/apiserver/pkg/util/term"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
-	componentbaseconfig "k8s.io/component-base/config"
 	"k8s.io/klog"
-	"k8s.io/kubernetes/pkg/util/configz"
-	"net/http"
-	goruntime "runtime"
 	"time"
 )
 
@@ -62,26 +55,11 @@ kubernetes controller which manages devices so that the device metadata/status d
 			klog.Infof("Version: %+v", version.Get())
 
 			registerModules(config)
-			// Setup any healthz checks we will want to use.
-			var checks []healthz.HealthChecker
 
-			var electionChecker *kele.ReadyzAdaptor
-			if config.LeaderElection.LeaderElect  {
-				//electionChecker = leaderelection.NewLeaderHealthzAdaptor(time.Second * 20)
-				electionChecker = kele.NewLeaderReadyzAdaptor(time.Second * 20)
-				checks = append(checks, electionChecker)
-			}
-
-			// Start the cloudcore HTTP server
-			// unsecuredMux is the handler *without* authn/authz filters have been applied
-			var unsecuredMux *mux.PathRecorderMux
-			unsecuredMux = NewBaseHandler(&componentbaseconfig.DebuggingConfiguration{}, checks...)
-			go func (){
- 				err := http.ListenAndServe("0.0.0.0:10260", unsecuredMux)
-				klog.Errorf("%v",err)
-			}()
 			// If leader election is enabled, runCommand via LeaderElector until done and exit.
 			if config.LeaderElection.LeaderElect {
+				//TODO: expose electionChecker to a http server
+				electionChecker := kele.NewLeaderReadyzAdaptor(time.Second * 20)
 				kele.Run(config,electionChecker)
 				return
 			}
@@ -120,27 +98,4 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	edgecontroller.Register(c.Modules.EdgeController, c.KubeAPIConfig, "", false)
 	devicecontroller.Register(c.Modules.DeviceController, c.KubeAPIConfig)
 	synccontroller.Register(c.Modules.SyncController, c.KubeAPIConfig)
-}
-
-// NewBaseHandler takes in CompletedConfig and returns a handler.
-func NewBaseHandler(c *componentbaseconfig.DebuggingConfiguration, checks ...healthz.HealthChecker) *mux.PathRecorderMux {
-	pathRecorderMux := mux.NewPathRecorderMux("cloudcore")
-
-	//Installing the default healthz handler
-	healthz.InstallHandler(pathRecorderMux)
-	healthz.InstallReadyzHandler(pathRecorderMux, checks...)
-	return pathRecorderMux
-
-	//TODO: determine how to use these
-	if c.EnableProfiling {
-		routes.Profiling{}.Install(pathRecorderMux)
-		if c.EnableContentionProfiling {
-			goruntime.SetBlockProfileRate(1)
-		}
-	}
-	configz.InstallHandler(pathRecorderMux)
-	//lint:ignore SA1019 See the Metrics Stability Migration KEP
-	//mux.Handle("/metrics", legacyregistry.Handler())
-
-	return pathRecorderMux
 }

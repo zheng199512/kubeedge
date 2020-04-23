@@ -48,7 +48,7 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor){
 		OnStartedLeading: func(ctx gocontext.Context){
 			// Start all modules,
 			core.StartModules()
-			// Patch Ready++ if program run in pod
+			// Patch PodReadinessGate if program run in pod
 			err := TryToPatchPodReadinessGate()
 			if err!=nil{
 				// Terminate the program gracefully
@@ -112,12 +112,12 @@ func makeLeaderElectionConfig(config componentbaseconfig.LeaderElectionConfigura
 		Name:          "cloudcore",
 	}, nil
 }
-// Try Patch PodReadinessGate if program runs in pod
+// Try to patch PodReadinessGate if program runs in pod
 func TryToPatchPodReadinessGate()error{
 	podname,isInPod :=os.LookupEnv("CLOUDCORE_POD_NAME")
 	if isInPod == true {
 		namespace := os.Getenv("CLOUDCORE_POD_NAMESPACE")
-		klog.Infof("CloudCore is running in pod %v/%v, try to patch PodReadinessGate",namespace,podname)
+		klog.Infof("CloudCore is running in pod %v/%v, try to patch PodReadinessGate", namespace, podname)
 		//TODO: use specific clients
 		cli, err := utils.KubeClient()
 		if err != nil {
@@ -142,11 +142,11 @@ func TryToPatchPodReadinessGate()error{
 		//Try to patch
 		var isPatchSuccess  = false
 		for i:=1;i<=5;i++{
-			if _, err = cli.CoreV1().Pods(namespace).Patch( podname, types.StrategicMergePatchType, patchBytes); err != nil {
-				klog.Warningf("Error patching podReadinessGate to pod %v through apiserver: %v ,try again, times: %d", podname,err,i)
+			if _, err = cli.CoreV1().Pods(namespace).Patch( podname, types.StrategicMergePatchType, patchBytes, "status"); err != nil {
+				klog.Warningf("Error patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %v through apiserver: %v ,try again, times: %d", podname,err,i)
 				time.Sleep(time.Second)
 			}else{
-				//klog.Infof("Successfully patching podReadinessGate to pod %q through apiserver, pod", podname)
+				klog.Infof("Successfully patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %q through apiserver", podname)
 				isPatchSuccess = true
 				break
 			}
