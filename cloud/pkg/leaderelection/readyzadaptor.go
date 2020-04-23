@@ -35,7 +35,7 @@ func (l *ReadyzAdaptor) Check(req *http.Request) error {
 	if l.le == nil {
 		return fmt.Errorf("leaderElection is not setting")
 	}
-	if !l.le.IsLeader(){
+	if !l.le.IsLeader() {
 		return fmt.Errorf("not yet a leader")
 	}
 	return l.le.Check(l.timeout)

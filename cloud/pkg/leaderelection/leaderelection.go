@@ -1,4 +1,5 @@
 package leaderelection
+
 import (
 	gocontext "context"
 	"encoding/json"
@@ -27,9 +28,9 @@ import (
 	config "github.com/kubeedge/kubeedge/pkg/apis/componentconfig/cloudcore/v1alpha1"
 )
 
-func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor){
+func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor) {
 	// To help debugging, immediately log config for LeaderElection
-	klog.Infof("Config for LeaderElection : %v",*cfg.LeaderElection)
+	klog.Infof("Config for LeaderElection : %v", *cfg.LeaderElection)
 	// Init Context for leaderElection
 	beehiveContext.InitContext(beehiveContext.MsgCtxTypeChannel)
 
@@ -47,12 +48,12 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor){
 		return
 	}
 	leaderElectionConfig.Callbacks = leaderelection.LeaderCallbacks{
-		OnStartedLeading: func(ctx gocontext.Context){
+		OnStartedLeading: func(ctx gocontext.Context) {
 			// Start all modules,
 			core.StartModules()
 			// Patch PodReadinessGate if program run in pod
 			err := TryToPatchPodReadinessGate()
-			if err!=nil{
+			if err != nil {
 				// Terminate the program gracefully
 				klog.Errorf("Error patching pod readinessGate: %v", err)
 				TriggerGracefulShutdown()
@@ -82,6 +83,7 @@ func Run(cfg *config.CloudCoreConfig, readyzAdaptor *ReadyzAdaptor){
 	core.GracefulShutdown()
 	return
 }
+
 // makeLeaderElectionConfig builds a leader election configuration. It will
 // create a new resource lock associated with the configuration.
 func makeLeaderElectionConfig(config componentbaseconfig.LeaderElectionConfiguration, client clientset.Interface, recorder record.EventRecorder) (*leaderelection.LeaderElectionConfig, error) {
@@ -114,9 +116,10 @@ func makeLeaderElectionConfig(config componentbaseconfig.LeaderElectionConfigura
 		Name:          "cloudcore",
 	}, nil
 }
+
 // Try to patch PodReadinessGate if program runs in pod
-func TryToPatchPodReadinessGate()error{
-	podname,isInPod :=os.LookupEnv("CLOUDCORE_POD_NAME")
+func TryToPatchPodReadinessGate() error {
+	podname, isInPod := os.LookupEnv("CLOUDCORE_POD_NAME")
 	if isInPod == true {
 		namespace := os.Getenv("CLOUDCORE_POD_NAMESPACE")
 		klog.Infof("CloudCore is running in pod %v/%v, try to patch PodReadinessGate", namespace, podname)
@@ -128,26 +131,26 @@ func TryToPatchPodReadinessGate()error{
 
 		//Creat patchBytes
 		getPod, err := cli.CoreV1().Pods(namespace).Get(podname, metaV1.GetOptions{})
-		originalJson, err := json.Marshal(getPod)
+		originalJSON, err := json.Marshal(getPod)
 		if err != nil {
 			return fmt.Errorf("failed to marshal modified pod %q into JSON: %v", podname, err)
 		}
 		//Todo: Read PodReadinessGate from CloudCore configuration or env
 		condition := corev1.PodCondition{Type: "kubeedge.io/CloudCoreIsLeader", Status: corev1.ConditionTrue}
 		podutil.UpdatePodCondition(&getPod.Status, &condition)
-		newJson, err := json.Marshal(getPod)
-		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(originalJson, newJson, corev1.Pod{})
+		newJSON, err := json.Marshal(getPod)
+		patchBytes, err := strategicpatch.CreateTwoWayMergePatch(originalJSON, newJSON, corev1.Pod{})
 		if err != nil {
-			return fmt.Errorf("failed to create two way merge patch: %v",err)
+			return fmt.Errorf("failed to create two way merge patch: %v", err)
 		}
 
 		//Try to patch
-		var isPatchSuccess  = false
-		for i:=1;i<=5;i++{
-			if _, err = cli.CoreV1().Pods(namespace).Patch( podname, types.StrategicMergePatchType, patchBytes, "status"); err != nil {
-				klog.Warningf("Error patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %v through apiserver: %v ,try again, times: %d", podname,err,i)
+		var isPatchSuccess = false
+		for i := 1; i <= 5; i++ {
+			if _, err = cli.CoreV1().Pods(namespace).Patch(podname, types.StrategicMergePatchType, patchBytes, "status"); err != nil {
+				klog.Warningf("Error patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %v through apiserver: %v ,try again, times: %d", podname, err, i)
 				time.Sleep(time.Second)
-			}else{
+			} else {
 				klog.Infof("Successfully patching podReadinessGate: kubeedge.io/CloudCoreIsLeader to pod %q through apiserver", podname)
 				isPatchSuccess = true
 				break
@@ -156,26 +159,25 @@ func TryToPatchPodReadinessGate()error{
 		if isPatchSuccess != true {
 			return fmt.Errorf("failed to patch after 5 attempts")
 		}
-	}else{
+	} else {
 		klog.Infoln("CloudCore is not running in pod")
 	}
 	return nil
 }
 
 // Trigger core.GracefulShutdown()
-func TriggerGracefulShutdown(){
-	if beehiveContext.GetContext().Err() != nil{
+func TriggerGracefulShutdown() {
+	if beehiveContext.GetContext().Err() != nil {
 		klog.Errorln("Program is in gracefully shutdown")
 		return
 	}
 	klog.Errorln("Trigger graceful shutdown!")
-	p,err := os.FindProcess(syscall.Getpid())
-	if err != nil{
-		klog.Errorf("Failed to find self process %v",err)
+	p, err := os.FindProcess(syscall.Getpid())
+	if err != nil {
+		klog.Errorf("Failed to find self process %v", err)
 	}
 	err = p.Signal(os.Interrupt)
-	if  err != nil{
-		klog.Errorf("Failed to trigger graceful shutdown: ",err)
+	if err != nil {
+		klog.Errorf("Failed to trigger graceful shutdown: ", err)
 	}
 }
-

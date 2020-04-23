@@ -62,7 +62,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 			if config.LeaderElection.LeaderElect {
 				//TODO: expose electionChecker to a http server
 				electionChecker := kele.NewLeaderReadyzAdaptor(time.Second * 20)
-				kele.Run(config,electionChecker)
+				kele.Run(config, electionChecker)
 				return
 			}
 
