@@ -39,5 +39,5 @@ func (s *Server) ListenAndServe(host server.HostInterface, resourceAnalyzer stat
 		Handler:        &handler,
 		MaxHeaderBytes: 1 << 20,
 	}
-	klog.Fatal(server.ListenAndServeTLS("/var/lib/kubelet/pki/kubelet.crt","/var/lib/kubelet/pki/kubelet.key"))
+	klog.Fatal(server.ListenAndServeTLS("/etc/kubeedge/certs/edge.crt", "/etc/kubeedge/certs/edge.key"))
 }

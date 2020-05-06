@@ -27,7 +27,7 @@ const (
 
 	// KubeletPort is the default port for the kubelet server on each host machine.
 	// May be overridden by a flag at startup in the future.
-	KubeletPort = 10350
+	KubeletPort = 10250
 )
 
 var Config Configure
