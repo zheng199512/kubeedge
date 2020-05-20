@@ -531,13 +531,9 @@ func (m *metaManager) syncPodStatus() {
 		klog.Infof("list pod status, no record, skip sync")
 		return
 	}
-
-	var namespace string
-	content := make([]interface{}, 0, len(*podStatusRecords))
+	contents := make(map[string][]interface{})
 	for _, v := range *podStatusRecords {
-		if namespace == "" {
-			namespace, _, _, _ = util.ParseResourceEdge(v.Key, model.QueryOperation)
-		}
+		namespaceParsed, _, _, _ := util.ParseResourceEdge(v.Key, model.QueryOperation)
 		podKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep, 1)
 		podRecord, err := dao.QueryMeta("key", podKey)
 		if err != nil {
@@ -558,12 +554,17 @@ func (m *metaManager) syncPodStatus() {
 			klog.Errorf("unmarshal podstatus[%s] failed, content[%s]: %v", v.Key, v.Value, err)
 			continue
 		}
-		content = append(content, podStatus)
+		if _, ok := contents[namespaceParsed]; !ok {
+			contents[namespaceParsed] = []interface{}{podStatus}
+		} else {
+			contents[namespaceParsed] = append(contents[namespaceParsed], podStatus)
+		}
 	}
-
-	msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
-	sendToCloud(msg)
-	klog.Infof("sync pod status successful, %s", msgDebugInfo(msg))
+	for namespace, content := range contents {
+		msg := model.NewMessage("").BuildRouter(MetaManagerModuleName, GroupResource, namespace+constants.ResourceSep+model.ResourceTypePodStatus, model.UpdateOperation).FillBody(content)
+		sendToCloud(msg)
+		klog.Infof("sync pod status successful for namespaces %s, %s", namespace, msgDebugInfo(msg))
+	}
 }
 
 func (m *metaManager) processFunctionAction(message model.Message) {
