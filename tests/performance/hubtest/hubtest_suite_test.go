@@ -27,7 +27,6 @@ import (
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
-	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 // configs across the package
@@ -56,33 +55,10 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		err := ApplyLabel(ctx.Cfg.K8SMasterForProvisionEdgeNodes + NodeHandler)
 		Expect(err).Should(BeNil())
 
-		// Deploy KubeEdge Cloud Part as a k8s deployment into KubeEdge Cluster
-		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
-		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
-		//protocol to be used for test between edge and cloud
-		if ctx.Cfg.Protocol == api.ProtocolTypeQuic {
-			IsQuicProtocol = true
-		} else {
-			IsQuicProtocol = false
-		}
-		err = HandleCloudDeployment(
-			CloudConfigMap,
-			CloudCoreDeployment,
-			ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler,
-			ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-			ctx.Cfg.CloudImageURL,
-			ctx.Cfg.NumOfNodes)
-		Expect(err).Should(BeNil())
-		time.Sleep(1 * time.Second)
-
-		// Get KubeEdge Cloud Part host ip
-		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
-		Expect(err).To(BeNil())
-		cloudPartHostIP := ""
+		cloudPartHostIP := "192.168.27.23"
 		for _, pod := range podlist.Items {
-			if strings.Contains(pod.Name, "cloudcore-deployment") {
-				cloudPartHostIP = pod.Status.HostIP
+			if strings.Contains(pod.Name, "cloudcore") {
+				cloudPartHostIP = "192.168.27.23"
 				break
 			}
 		}
@@ -90,7 +66,7 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		// Check if KubeEdge Cloud Part is running
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(5 * time.Second)
-
+		CloudCoreDeployment = "cloudcore"
 		// Create NodePort Service for KubeEdge Cloud Part
 		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
@@ -109,9 +85,9 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 	AfterSuite(func() {
 		By("KubeEdge hub performance test end!")
 		// Delete KubeEdge Cloud Part deployment
-		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
+		//DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		// Check if KubeEdge Cloud Part is deleted
-		utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+		//utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	})
 	RunSpecs(t, "KubeEdge hub performance test suite")
 }

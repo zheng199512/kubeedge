@@ -29,10 +29,10 @@ create_edge_config() {
         exit 1
     fi
     echo "file found !!!!!!!!!!!!!"
-    sed -i "s|namespace: .*|namespace: default|g" ${EDGE_PATH}
+    sed -i "s|namespace: .*|namespace: kubeedge|g" ${EDGE_PATH}
     sed -i "s|name: edgecore-configmap.*|name: ${configmapName}|g" ${EDGE_PATH}
-    sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGE_PATH}
-    sed -i "s|hostname-override: .*|hostname-override: ${nodename}|g" ${EDGE_PATH}
+#    sed -i "s|node-id: .*|node-id: ${nodename}|g" ${EDGE_PATH}
+    sed -i "s|hostnameOverride: .*|hostnameOverride: ${nodename}|g" ${EDGE_PATH}
     if [[ ${Url} == *"wss"* ]]; then
         sed -i "20s|url: .*|url: ${Url}/e632aba927ea4ac2b575ec1603d56f10/${nodename}/events|g" ${EDGE_PATH}
         sed -i "s|protocol: .*|protocol: websocket|g" ${EDGE_PATH}

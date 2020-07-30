@@ -44,7 +44,7 @@ import (
 )
 
 const (
-	Namespace             = "default"
+	Namespace             = "kubeedge"
 	DeviceETPrefix        = "$hw/events/device/"
 	TwinETUpdateSuffix    = "/twin/update"
 	TwinETGetSuffix       = "/twin/get"
@@ -180,26 +180,21 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
 							},
 						},
-						Env:          []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
-						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/edge/conf"}},
-					}, {
-						Name:            "dind-daemon",
-						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
-						Image:           "docker:dind",
-						Resources: v1.ResourceRequirements{
-							Requests: v1.ResourceList{
-								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("20m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("256Mi"),
-							},
+						Env: []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
+						VolumeMounts: []v1.VolumeMount{
+							{Name: "cert", MountPath: "/etc/kubeedge/certs"},
+							{Name: "ca", MountPath: "/etc/kubeedge/ca"},
+							{Name: "conf", MountPath: "/etc/kubeedge/config"},
+							{Name: "sock", MountPath: "/var/run"},
 						},
-						VolumeMounts: []v1.VolumeMount{{Name: "docker-graph-storage", MountPath: "/var/lib/docker"}},
 					},
 				},
 				NodeSelector: map[string]string{"k8snode": "kb-perf-node"},
 				Volumes: []v1.Volume{
-					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
+					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/edgecerts"}}},
+					{Name: "ca", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/caedgecerts"}}},
+					{Name: "sock", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/var/run"}}},
 					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
-					{Name: "docker-graph-storage", VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}}},
 				},
 			},
 		},
@@ -233,11 +228,11 @@ func cloudcoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deplo
 							},
 						},
 						Ports:        portInfo,
-						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/cloud/conf"}},
+						VolumeMounts: []v1.VolumeMount{{Name: "cert", MountPath: "/etc/kubeedge/certs"}, {Name: "conf", MountPath: "/etc/kubeedge/config"}},
 					},
 				},
 				Volumes: []v1.Volume{
-					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/etc/kubeedge/certs"}}},
+					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/cloudcerts"}}},
 					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
 				},
 			},
@@ -470,11 +465,11 @@ func CreateServiceObject(name string) *v1.Service {
 
 	Service := v1.Service{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
-		ObjectMeta: metav1.ObjectMeta{Name: name, Labels: map[string]string{"app": constants.KubeEdge}},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: Namespace, Labels: map[string]string{"app": constants.KubeEdge}},
 
 		Spec: v1.ServiceSpec{
 			Ports:    portInfo,
-			Selector: map[string]string{"app": "cloudcore"},
+			Selector: map[string]string{"kubeedge": "cloudcore"},
 			Type:     "NodePort",
 		},
 	}

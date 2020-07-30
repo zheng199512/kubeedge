@@ -29,7 +29,6 @@ import (
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
 	. "github.com/kubeedge/kubeedge/tests/performance/common"
-	"github.com/kubeedge/viaduct/pkg/api"
 )
 
 //context to load config and access across the package
@@ -55,25 +54,25 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
 		err := ApplyLabel(ctx.Cfg.K8SMasterForProvisionEdgeNodes + NodeHandler)
 		Expect(err).Should(BeNil())
-		//Create configMap for CloudCore
-		CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
-		CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
-		//protocol to be used for test between edge and cloud
-		if ctx.Cfg.Protocol == api.ProtocolTypeQuic {
-			IsQuicProtocol = true
-		} else {
-			IsQuicProtocol = false
-		}
-		//Deploye cloudcore as a k8s resource to cluster-1
-		err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
-			ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageURL, ctx.Cfg.NumOfNodes)
-		Expect(err).Should(BeNil())
-		time.Sleep(1 * time.Second)
+		////Create configMap for CloudCore
+		//CloudConfigMap = "cloudcore-configmap-" + utils.GetRandomString(5)
+		//CloudCoreDeployment = "cloudcore-deployment-" + utils.GetRandomString(5)
+		////protocol to be used for test between edge and cloud
+		//if ctx.Cfg.Protocol == api.ProtocolTypeQuic {
+		//	IsQuicProtocol = true
+		//} else {
+		//	IsQuicProtocol = false
+		//}
+		////Deploye cloudcore as a k8s resource to cluster-1
+		//err = HandleCloudDeployment(CloudConfigMap, CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge,
+		//	ctx.Cfg.K8SMasterForKubeEdge+ConfigmapHandler, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler, ctx.Cfg.CloudImageURL, ctx.Cfg.NumOfNodes)
+		//Expect(err).Should(BeNil())
+		//time.Sleep(1 * time.Second)
 		//Get the cloudCore pod Node name and IP
 		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
 		Expect(err).To(BeNil())
 		for _, pod := range podlist.Items {
-			if strings.Contains(pod.Name, "cloudcore-deployment") {
+			if strings.Contains(pod.Name, "cloudcore") {
 				cloudCoreHostIP = pod.Status.HostIP
 				cloudCoreNodeName = pod.Spec.NodeName
 			}
@@ -82,6 +81,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 		time.Sleep(5 * time.Second)
 		//Create service for cloud
+		CloudCoreDeployment = "cloudcore"
 		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
 		Expect(err).Should(BeNil())
 		//Create a nodePort Service to access the cloud Service from the cluster nodes
@@ -114,7 +114,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 		//untaint Node
 		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
 		Expect(err).Should(BeNil())
-		DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
+		//DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 	})
 
 	RunSpecs(t, "kubeedge Performance Load test Suite")

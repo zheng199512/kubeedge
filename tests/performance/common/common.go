@@ -39,11 +39,11 @@ import (
 
 //K8s resource handlers
 const (
-	AppHandler        = "/api/v1/namespaces/default/pods"
+	AppHandler        = "/api/v1/namespaces/kubeedge/pods"
 	NodeHandler       = "/api/v1/nodes"
-	DeploymentHandler = "/apis/apps/v1/namespaces/default/deployments"
-	ConfigmapHandler  = "/api/v1/namespaces/default/configmaps"
-	ServiceHandler    = "/api/v1/namespaces/default/services"
+	DeploymentHandler = "/apis/apps/v1/namespaces/kubeedge/deployments"
+	ConfigmapHandler  = "/api/v1/namespaces/kubeedge/configmaps"
+	ServiceHandler    = "/api/v1/namespaces/kubeedge/services"
 	NodelabelKey      = "k8snode"
 	NodelabelVal      = "kb-perf-node"
 )
@@ -198,17 +198,16 @@ func DeleteCloudDeployment(apiserver string) {
 }
 
 func ApplyLabel(nodeHandler string) error {
-	var isMasterNode bool
+	var isTestNode bool
 	nodes := utils.GetNodes(nodeHandler)
 	for _, node := range nodes.Items {
-		isMasterNode = false
+		isTestNode = false
 		for key := range node.Labels {
-			if strings.Contains(key, "node-role.kubernetes.io/master") {
-				isMasterNode = true
-				break
+			if strings.Contains(key, "edgetestnode") {
+				isTestNode = true
 			}
 		}
-		if !isMasterNode {
+		if isTestNode {
 			utils.ApplyLabelToNode(nodeHandler+"/"+node.Name, NodelabelKey, NodelabelVal)
 		}
 	}
