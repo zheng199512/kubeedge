@@ -76,7 +76,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 			break
 		}
 		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-		time.Sleep(300 * time.Second)
+		time.Sleep(5 * time.Second)
 		CloudCoreDeployment = "cloudcore"
 		//Create service for cloud
 		err = utils.ExposeCloudService(CloudCoreDeployment, ctx.Cfg.K8SMasterForKubeEdge+ServiceHandler)
@@ -95,7 +95,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 	})
 	AfterSuite(func() {
 		By("Kubeedge deployment Load test End !!....!")
-
+		utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "cloudcore")
 		//DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		//utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	})

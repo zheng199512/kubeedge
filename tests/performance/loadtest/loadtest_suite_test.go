@@ -101,19 +101,20 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 			ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler, ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, ctx.Cfg.NumOfNodes)
 
 		//skip the pod scheduling in k8s node while kubeedge nodes are available to schedule
-		ToTaint = true
-		err = utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
-		Expect(err).Should(BeNil())
-		ToTaint = false
+		//ToTaint = true
+		//err = utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
+		//Expect(err).Should(BeNil())
+		//ToTaint = false
 	})
 	AfterSuite(func() {
 		By("Kubeedge deployment Load test End !!....!")
 
 		DeleteEdgeDeployments(ctx.Cfg.K8SMasterForKubeEdge, ctx.Cfg.K8SMasterForProvisionEdgeNodes, ctx.Cfg.NumOfNodes)
-		utils.CheckDeploymentPodDeleteState(ctx.Cfg.K8SMasterForProvisionEdgeNodes, podlist)
+		utils.CheckDeploymentPodDeleteState(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, podlist)
+		utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "/cloudcore")
 		//untaint Node
-		err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
-		Expect(err).Should(BeNil())
+		//err := utils.TaintEdgeDeployedNode(ToTaint, ctx.Cfg.K8SMasterForKubeEdge+NodeHandler+"/"+cloudCoreNodeName)
+		//Expect(err).Should(BeNil())
 		//DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 	})
 

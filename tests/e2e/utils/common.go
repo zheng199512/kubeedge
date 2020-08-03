@@ -141,11 +141,13 @@ func nginxDeploymentSpec(imgURL, selector string, replicas int) *apps.Deployment
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{
-						Name:  "nginx",
-						Image: imgURL,
+						Command: []string{"sleep", "30000"},
+						Name:    "busybox",
+						Image:   imgURL,
 					},
 				},
 				NodeSelector: nodeselector,
+				HostNetwork:  true,
 			},
 		},
 	}
@@ -175,17 +177,29 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
 								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
 							},
-							Limits: v1.ResourceList{
-								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("200m"),
-								v1.ResourceName(v1.ResourceMemory): resource.MustParse("100Mi"),
-							},
 						},
-						Env: []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2375"}},
+						Env: []v1.EnvVar{{Name: "DOCKER_HOST", Value: "tcp://localhost:2376"}},
 						VolumeMounts: []v1.VolumeMount{
 							{Name: "cert", MountPath: "/etc/kubeedge/certs"},
 							{Name: "ca", MountPath: "/etc/kubeedge/ca"},
 							{Name: "conf", MountPath: "/etc/kubeedge/config"},
-							{Name: "sock", MountPath: "/var/run"},
+							{Name: "docker", MountPath: "/var/run"},
+							{Name: "docker-graph-storage", MountPath: "/var/lib/docker"},
+						},
+					}, {
+						Name:            "dind-daemon",
+						SecurityContext: &v1.SecurityContext{Privileged: &IsSecureCtx},
+						Image:           "k8s-deploy/docker:19.03.6-dind",
+						Resources: v1.ResourceRequirements{
+							Requests: v1.ResourceList{
+								v1.ResourceName(v1.ResourceCPU):    resource.MustParse("20m"),
+								v1.ResourceName(v1.ResourceMemory): resource.MustParse("512Mi"),
+							},
+						},
+						VolumeMounts: []v1.VolumeMount{
+							{Name: "docker-graph-storage", MountPath: "/var/lib/docker"},
+							{Name: "daemon", MountPath: "/etc/docker/daemon.json", ReadOnly: true, SubPath: "daemon.json"},
+							{Name: "docker", MountPath: "/var/run"},
 						},
 					},
 				},
@@ -193,7 +207,12 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 				Volumes: []v1.Volume{
 					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/edgecerts"}}},
 					{Name: "ca", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/caedgecerts"}}},
-					{Name: "sock", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/var/run"}}},
+					{Name: "docker-graph-storage", VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}}},
+					{Name: "docker", VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}}},
+					{Name: "daemon", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{
+						LocalObjectReference: v1.LocalObjectReference{Name: "daemon"},
+						Items:                []v1.KeyToPath{{Key: "daemon.json", Path: "daemon.json"}},
+					}}},
 					{Name: "conf", VolumeSource: v1.VolumeSource{ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: configmap}}}},
 				},
 			},

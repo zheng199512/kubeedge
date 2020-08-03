@@ -54,6 +54,8 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 		//apply label to all cluster nodes, use the selector to deploy all edgenodes to cluster nodes
 		err := ApplyLabel(ctx.Cfg.K8SMasterForProvisionEdgeNodes + NodeHandler)
 		Expect(err).Should(BeNil())
+		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
+		Expect(err).To(BeNil())
 
 		cloudPartHostIP := "192.168.27.23"
 		for _, pod := range podlist.Items {
@@ -84,6 +86,7 @@ func TestKubeEdgeK8SDeployment(t *testing.T) {
 	})
 	AfterSuite(func() {
 		By("KubeEdge hub performance test end!")
+		utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "cloudcore")
 		// Delete KubeEdge Cloud Part deployment
 		//DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		// Check if KubeEdge Cloud Part is deleted
