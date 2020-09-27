@@ -45,34 +45,22 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 			utils.CheckDeploymentPodDeleteState(ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler, podlist)
 		})
 
-		Measure("PERF_NODETEST_NODES_1: Create 1 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			NoOfEdgeNodes = 1
-			CreateConfigMapforEdgeCore(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler,
-				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
-			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
-				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
-					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
-			})
-			utils.Infof("Runtime stats: %+v", runtime)
-		}, 5)
-		Measure("PERF_NODETEST_NODES_5: Create 5 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			NoOfEdgeNodes = 5
-			CreateConfigMapforEdgeCore(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler,
-				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
-			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
-				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
-					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
-			})
-			utils.Infof("Runtime stats: %+v", runtime)
-		}, 5)
+		//Measure("PERF_NODETEST_NODES_100: Create 100 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
+		//	podlist = metav1.PodList{}
+		//	NoOfEdgeNodes = 100
+		//	CreateConfigMapforEdgeCore(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler,
+		//		ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
+		//	runtime := b.Time("PERF_NODETEST_NODES_1", func() {
+		//		podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
+		//			ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
+		//			ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
+		//	})
+		//	utils.Infof("Runtime stats: %+v", runtime)
+		//}, 3)
 
-		Measure("PERF_NODETEST_NODES_10: Create 10 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
+		Measure("PERF_NODETEST_NODES_500: Create 500 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
-			NoOfEdgeNodes = 10
+			NoOfEdgeNodes = ctx.Cfg.NumOfNodes
 			CreateConfigMapforEdgeCore(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler,
 				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
@@ -81,18 +69,18 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
 			})
 			utils.Infof("Runtime stats: %+v", runtime)
-		}, 5)
-		Measure("PERF_NODETEST_NODES_20: Create 20 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			NoOfEdgeNodes = 50
-			CreateConfigMapforEdgeCore(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler,
-				ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
-			runtime := b.Time("PERF_NODETEST_NODES_1", func() {
-				podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
-					ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
-					ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
-			})
-			utils.Infof("Runtime stats: %+v", runtime)
-		}, 5)
+		}, 1)
+		//Measure("PERF_NODETEST_NODES_400: Create 400 KubeEdge Node Deployment, Measure Node Ready time", func(b Benchmarker) {
+		//	podlist = metav1.PodList{}
+		//	NoOfEdgeNodes = 500
+		//	CreateConfigMapforEdgeCore(cloudHubURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+ConfigmapHandler,
+		//		ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
+		//	runtime := b.Time("PERF_NODETEST_NODES_1", func() {
+		//		podlist = HandleEdgeCorePodDeployment(ctx.Cfg.K8SMasterForProvisionEdgeNodes+DeploymentHandler,
+		//			ctx.Cfg.EdgeImageURL, ctx.Cfg.K8SMasterForProvisionEdgeNodes+AppHandler,
+		//			ctx.Cfg.K8SMasterForKubeEdge+NodeHandler, NoOfEdgeNodes)
+		//	})
+		//	utils.Infof("Runtime stats: %+v", runtime)
+		//}, 3)
 	})
 })

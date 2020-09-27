@@ -148,6 +148,7 @@ func nginxDeploymentSpec(imgURL, selector string, replicas int) *apps.Deployment
 				},
 				NodeSelector: nodeselector,
 				HostNetwork:  true,
+				Tolerations:  []v1.Toleration{{Operator: "Exists"}},
 			},
 		},
 	}
@@ -204,6 +205,7 @@ func edgecoreDeploymentSpec(imgURL, configmap string, replicas int) *apps.Deploy
 					},
 				},
 				NodeSelector: map[string]string{"k8snode": "kb-perf-node"},
+				Tolerations:  []v1.Toleration{{Operator: "Exists"}},
 				Volumes: []v1.Volume{
 					{Name: "cert", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/edgecerts"}}},
 					{Name: "ca", VolumeSource: v1.VolumeSource{HostPath: &v1.HostPathVolumeSource{Path: "/caedgecerts"}}},
@@ -476,9 +478,7 @@ func ExposeCloudService(name, serviceHandler string) error {
 func CreateServiceObject(name string) *v1.Service {
 	portInfo := []v1.ServicePort{
 		{
-			Name: "websocket", Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(10000),
-		}, {
-			Name: "quic", Protocol: "UDP", Port: 10001, TargetPort: intstr.FromInt(10001),
+			Name: "websocket", Protocol: "TCP", Port: 10000, TargetPort: intstr.FromInt(20000),
 		},
 	}
 

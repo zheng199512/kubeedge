@@ -95,7 +95,7 @@ func TestEdgecoreK8sDeployment(t *testing.T) {
 	})
 	AfterSuite(func() {
 		By("Kubeedge deployment Load test End !!....!")
-		utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "cloudcore")
+		utils.DeleteSvc(ctx.Cfg.K8SMasterForKubeEdge + ServiceHandler + "/cloudcore")
 		//DeleteCloudDeployment(ctx.Cfg.K8SMasterForKubeEdge)
 		//utils.CheckPodDeleteState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	})

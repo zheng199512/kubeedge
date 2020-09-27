@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-SRC_DIR=${GOPATH}/src/github.com/kubeedge/kubeedge
+SRC_DIR=/root/go/src/github.com/kubeedge/kubeedge
 EDGE_PATH=${SRC_DIR}/tests/performance/assets/02-edgeconfigmap.yaml
 CLOUD_PATH=${SRC_DIR}/tests/performance/assets/01-configmap.yaml
 

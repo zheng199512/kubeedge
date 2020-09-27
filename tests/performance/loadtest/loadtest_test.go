@@ -16,12 +16,12 @@ limitations under the License.
 package loadtest
 
 import (
+	v1 "k8s.io/api/apps/v1"
 	"net/http"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"k8s.io/api/apps/v1"
 	metav1 "k8s.io/api/core/v1"
 
 	"github.com/kubeedge/kubeedge/tests/e2e/utils"
@@ -120,8 +120,8 @@ func PullImageInAllEdgeNodes(appDeployments []string) {
 				break
 			}
 		}
-		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	}
+	utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 	//after pulling image to all edgenodes, delete the deployments on respective edgenodes
 	for i := range appDeployments {
 		IsAppDeployed := utils.HandleDeployment(false, false, http.MethodDelete, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler+"/"+appDeployments[i], "", ctx.Cfg.AppImageURL[1], nodeSelector, "", 10)
@@ -327,56 +327,78 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 		//	Expect(err).To(BeNil())
 		//	PullImageInAllEdgeNodes(appDeployments)
 		//})
-
-		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create 10 application Deployments, Measure Pod Running time", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			var err error
-			var nodeSelector string
-			var nodeName string
-			for key, val := range NodeInfo {
-				nodeSelector = val[1]
-				nodeName = key
-				break
-			}
-			b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_1", func() {
-				replica := 1
-				for i := 0; i < 10; i++ {
-					//Generate the random string and assign as a UID
-					UID = "edgecore-app-" + utils.GetRandomString(5)
-					appDeployments = append(appDeployments, UID)
-					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-						UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
-				}
-				time.Sleep(10 * time.Second)
-				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, nodeName)
-				Expect(err).To(BeNil())
-				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-			})
-		}, 3)
-
-		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create Node application Deployments while each deployment have 10 replica, Measure Pod Running time", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			var err error
-			var nodeSelector string
-			//var nodeName string
-			b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_1", func() {
-				replica := 10
-				for _, val := range NodeInfo {
-					nodeSelector = val[1]
-					//Generate the random string and assign as a UID
-					UID = "edgecore-app-" + utils.GetRandomString(5)
-					appDeployments = append(appDeployments, UID)
-					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-						UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
-
-				}
-				time.Sleep(10 * time.Second)
-				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
-				Expect(err).To(BeNil())
-				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-			})
-		}, 3)
-		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_2: Create Node application Deployments while each deployment have 20 replica, Measure Pod Running time", func(b Benchmarker) {
+		//
+		//Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create 10 application Deployments, Measure Pod Running time", func(b Benchmarker) {
+		//	podlist = metav1.PodList{}
+		//	var err error
+		//	var nodeSelector string
+		//	var nodeName string
+		//	for key, val := range NodeInfo {
+		//		nodeSelector = val[1]
+		//		nodeName = key
+		//		break
+		//	}
+		//	b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_1", func() {
+		//		replica := 1
+		//		for i := 0; i < 10; i++ {
+		//			//Generate the random string and assign as a UID
+		//			UID = "edgecore-app-" + utils.GetRandomString(5)
+		//			appDeployments = append(appDeployments, UID)
+		//			go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
+		//				UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
+		//		}
+		//		time.Sleep(10 * time.Second)
+		//		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, nodeName)
+		//		Expect(err).To(BeNil())
+		//		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+		//	})
+		//}, 3)
+		//
+		//Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_1: Create Node application Deployments while each deployment have 10 replica, Measure Pod Running time", func(b Benchmarker) {
+		//	podlist = metav1.PodList{}
+		//	var err error
+		//	var nodeSelector string
+		//	//var nodeName string
+		//	b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_1", func() {
+		//		replica := 10
+		//		for _, val := range NodeInfo {
+		//			nodeSelector = val[1]
+		//			//Generate the random string and assign as a UID
+		//			UID = "edgecore-app-" + utils.GetRandomString(5)
+		//			appDeployments = append(appDeployments, UID)
+		//			go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
+		//				UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
+		//
+		//		}
+		//		time.Sleep(10 * time.Second)
+		//		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
+		//		Expect(err).To(BeNil())
+		//		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+		//	})
+		//}, 3)
+		//Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_2: Create Node application Deployments while each deployment have 30 replica, Measure Pod Running time", func(b Benchmarker) {
+		//	podlist = metav1.PodList{}
+		//	var err error
+		//	var nodeSelector string
+		//	//var nodeName string
+		//	b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_2", func() {
+		//		replica := 30
+		//		for _, val := range NodeInfo {
+		//			nodeSelector = val[1]
+		//			//Generate the random string and assign as a UID
+		//			UID = "edgecore-app-" + utils.GetRandomString(5)
+		//			appDeployments = append(appDeployments, UID)
+		//			go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
+		//				UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
+		//
+		//		}
+		//		time.Sleep(10 * time.Second)
+		//		podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
+		//		Expect(err).To(BeNil())
+		//		utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
+		//	})
+		//}, 3)
+		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_3: Create Node application Deployments while each deployment have 30 replica, Measure Pod Running time", func(b Benchmarker) {
 			podlist = metav1.PodList{}
 			var err error
 			var nodeSelector string
@@ -392,34 +414,12 @@ var _ = Describe("Application deployment test in Perfronace test EdgeNodes", fun
 						UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
 
 				}
-				time.Sleep(10 * time.Second)
+				time.Sleep(300 * time.Second)
 				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
 				Expect(err).To(BeNil())
 				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
 			})
-		}, 3)
-		Measure("MEASURE_PERF_NODETEST_SINGLE_NODE_3: Create Node application Deployments while each deployment have 50 replica, Measure Pod Running time", func(b Benchmarker) {
-			podlist = metav1.PodList{}
-			var err error
-			var nodeSelector string
-			//var nodeName string
-			b.Time("MEASURE_PERF_NODETEST_SINGLE_NODE_2", func() {
-				replica := 50
-				for _, val := range NodeInfo {
-					nodeSelector = val[1]
-					//Generate the random string and assign as a UID
-					UID = "edgecore-app-" + utils.GetRandomString(5)
-					appDeployments = append(appDeployments, UID)
-					go utils.HandleDeployment(false, false, http.MethodPost, ctx.Cfg.K8SMasterForKubeEdge+DeploymentHandler,
-						UID, ctx.Cfg.AppImageURL[1], nodeSelector, "", replica)
-
-				}
-				time.Sleep(10 * time.Second)
-				podlist, err = utils.GetPods(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, "")
-				Expect(err).To(BeNil())
-				utils.CheckPodRunningState(ctx.Cfg.K8SMasterForKubeEdge+AppHandler, podlist)
-			})
-		}, 3)
+		}, 1)
 	})
 
 	//Context("Test application deployment on Kubeedge EdgeNodes with Quic Protocol", func() {
